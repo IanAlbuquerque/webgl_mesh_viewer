@@ -1,3 +1,5 @@
+import { create } from "domain";
+
 const fs = require('fs');
 
 const vertexShaderStringCode: string = fs.readFileSync(__dirname + './../shaders/vertex.glsl').toString();
@@ -16,42 +18,47 @@ function initCanvas(canvasId: string): void {
   const fragmentShader = createShader(webGL2RenderingContext, webGL2RenderingContext.FRAGMENT_SHADER, fragmentShaderrStringCode);
   const program = createProgram(webGL2RenderingContext, vertexShader, fragmentShader);
 
-  const positionAttributeLocation = webGL2RenderingContext.getAttribLocation(program, "a_position");
-  const positionBuffer = webGL2RenderingContext.createBuffer();
+  const vao = createVAO(webGL2RenderingContext);
 
-  webGL2RenderingContext.bindBuffer(webGL2RenderingContext.ARRAY_BUFFER, positionBuffer);
-  // three 2d points
-  const positions = [
-    0, 0,
-    0, 0.5,
-    0.7, 0,
-  ];
-  webGL2RenderingContext.bufferData(webGL2RenderingContext.ARRAY_BUFFER, new Float32Array(positions), webGL2RenderingContext.STATIC_DRAW);
+  webGL2RenderingContext.viewport(0, 0, webGL2RenderingContext.canvas.width, webGL2RenderingContext.canvas.height);
 
-  const vao = webGL2RenderingContext.createVertexArray();
+  webGL2RenderingContext.clearColor(0, 0, 0, 0);
+  webGL2RenderingContext.useProgram(program);
   webGL2RenderingContext.bindVertexArray(vao);
 
-  webGL2RenderingContext.enableVertexAttribArray(positionAttributeLocation);
+  draw(webGL2RenderingContext);
+}
+
+function draw(webGL2RenderingContext: WebGL2RenderingContext) {
+  webGL2RenderingContext.clear(webGL2RenderingContext.COLOR_BUFFER_BIT);
+  const primitiveType = webGL2RenderingContext.TRIANGLES;
+  const drawArrays_offset = 0;
+  const count = 3;
+  webGL2RenderingContext.drawArrays(primitiveType, drawArrays_offset, count);
+}
+
+function createDataBuffer(webGL2RenderingContext: WebGL2RenderingContext, vao: any) { 
+  const positionBuffer = webGL2RenderingContext.createBuffer();
+
+  webGL2RenderingContext.bindVertexArray(vao);
+
+  webGL2RenderingContext.bindBuffer(webGL2RenderingContext.ARRAY_BUFFER, positionBuffer);
+  const positions = [ 0, 0, 0, 0.5, 0.7, 0 ];
+  webGL2RenderingContext.bufferData(webGL2RenderingContext.ARRAY_BUFFER, new Float32Array(positions), webGL2RenderingContext.STATIC_DRAW);
+
+  webGL2RenderingContext.enableVertexAttribArray(0);
   const size = 2;          // 2 components per iteration
   const type = webGL2RenderingContext.FLOAT;   // the data is 32bit floats
   const normalize = false; // don't normalize the data
   const stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
   const vertexAttribPointer_offset = 0;        // start at the beginning of the buffer
-  webGL2RenderingContext.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, vertexAttribPointer_offset)
+  webGL2RenderingContext.vertexAttribPointer(0, size, type, normalize, stride, vertexAttribPointer_offset)
+}
 
-  webGL2RenderingContext.viewport(0, 0, webGL2RenderingContext.canvas.width, webGL2RenderingContext.canvas.height);
-
-  // Clear the canvas
-  webGL2RenderingContext.clearColor(0, 0, 0, 0);
-  webGL2RenderingContext.clear(webGL2RenderingContext.COLOR_BUFFER_BIT);
-
-  webGL2RenderingContext.useProgram(program);
-  webGL2RenderingContext.bindVertexArray(vao);
-
-  const primitiveType = webGL2RenderingContext.TRIANGLES;
-  const drawArrays_offset = 0;
-  const count = 3;
-  webGL2RenderingContext.drawArrays(primitiveType, drawArrays_offset, count);
+function createVAO(webGL2RenderingContext: WebGL2RenderingContext) {
+  const vao = webGL2RenderingContext.createVertexArray();
+  createDataBuffer(webGL2RenderingContext, vao);
+  return vao;
 }
 
 function createShader(webGL2RenderingContext: WebGL2RenderingContext, type: number, source: string): WebGLShader {

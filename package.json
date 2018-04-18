@@ -1,0 +1,32 @@
+{
+  "name": "webgl_mesh_viewer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./src/index.ts",
+  "scripts": {
+    "build": "node_modules/.bin/tsc && npm run bundle",
+    "bundle": "node_modules/.bin/browserify -t brfs dist/index.js -o dist/bundle.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IanAlbuquerque/webgl_mesh_viewer.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/IanAlbuquerque/webgl_mesh_viewer/issues"
+  },
+  "homepage": "https://github.com/IanAlbuquerque/webgl_mesh_viewer#readme",
+  "dependencies": {
+    "@types/webgl2": "0.0.3",
+    "uniq": "^1.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^8.0.53",
+    "brfs": "^1.6.1",
+    "browserify": "^16.2.0",
+    "nodemon": "^1.12.1",
+    "ts-node": "^3.3.0",
+    "typescript": "^2.6.1"
+  }
+}

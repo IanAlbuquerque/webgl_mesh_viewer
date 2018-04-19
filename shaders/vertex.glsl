@@ -1,7 +1,11 @@
 #version 300 es
  
-layout(location = 0) in vec4 a_position;
+precision mediump float;
+
+layout(location = 0) in vec3 position;
+
+uniform float currentTime;
  
 void main() {
-  gl_Position = a_position;
+  gl_Position = vec4(position * sin(currentTime), 1.0) ;
 }

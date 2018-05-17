@@ -25,3 +25,10 @@ export function createProgram(webGL2RenderingContext: WebGL2RenderingContext, ve
   console.error(webGL2RenderingContext.getProgramInfoLog(program));
   webGL2RenderingContext.deleteProgram(program);
 }
+
+export function projectionMatrix(width: number, height: number, near: number, far: number): number[] {
+  return [  2.0/width, 0, 0, 0,
+            0, 2.0/height, 0, 0,
+            0, 0, -2.0/(far - near), -(far + near)/(far - near),
+            0, 0, 0, 1 ];
+}

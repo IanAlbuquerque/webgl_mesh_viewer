@@ -4,8 +4,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var webgl_basics_1 = require("./webgl-basics");
 
-var vertexShaderStringCode = Buffer("I3ZlcnNpb24gMzAwIGVzDQogDQpwcmVjaXNpb24gbWVkaXVtcCBmbG9hdDsNCg0KbGF5b3V0KGxvY2F0aW9uID0gMCkgaW4gdmVjMyBwb3NpdGlvbjsNCg0KdW5pZm9ybSBmbG9hdCBjdXJyZW50VGltZTsNCiANCnZvaWQgbWFpbigpIHsNCiAgZ2xfUG9zaXRpb24gPSB2ZWM0KHBvc2l0aW9uICogc2luKGN1cnJlbnRUaW1lKSwgMS4wKSA7DQp9DQo=","base64").toString();
-var fragmentShaderrStringCode = Buffer("I3ZlcnNpb24gMzAwIGVzDQoNCnByZWNpc2lvbiBtZWRpdW1wIGZsb2F0Ow0KIA0Kb3V0IHZlYzQgb3V0Q29sb3I7DQogDQp1bmlmb3JtIGZsb2F0IGN1cnJlbnRUaW1lOw0KDQp2b2lkIG1haW4oKSB7DQogIGZsb2F0IHIgPSAxLjAgKiBzaW4oY3VycmVudFRpbWUqMi4wICsgMi4zKTsNCiAgZmxvYXQgZyA9IDEuMCAqIHNpbihjdXJyZW50VGltZSozLjAgKyAxLjMpOw0KICBmbG9hdCBiID0gMS4wICogc2luKGN1cnJlbnRUaW1lKjUuMCArIDMuOSk7DQogIG91dENvbG9yID0gdmVjNChyLCBnLCBiLCAxLjApIDsNCn0NCg==","base64").toString();
+var vertexShaderStringCode = Buffer("I3ZlcnNpb24gMzAwIGVzDQogDQpwcmVjaXNpb24gbWVkaXVtcCBmbG9hdDsNCg0KbGF5b3V0KGxvY2F0aW9uID0gMCkgaW4gdmVjMyBwb3NpdGlvbjsNCmxheW91dChsb2NhdGlvbiA9IDEpIGluIHZlYzMgbm9ybWFsOw0KDQp1bmlmb3JtIG1hdDQgbTsNCnVuaWZvcm0gbWF0NCB2Ow0KdW5pZm9ybSBtYXQ0IHA7DQogDQpvdXQgdmVjNCBwb3NpdGlvbkNhbWVyYVNwYWNlOw0Kb3V0IHZlYzQgbm9ybWFsQ2FtZXJhU3BhY2U7DQoNCnZvaWQgbWFpbigpIHsNCiAgdmVjNCBwb3NpdGlvblZlYzQgPSB2ZWM0KHBvc2l0aW9uLCAxLjApOw0KICB2ZWM0IG5vcm1hbFZlYzQgPSB2ZWM0KG5vcm1hbCwgMC4wKTsNCg0KICBtYXQ0IG12ID0gdiAqIG07DQogIG1hdDQgbXZwID0gcCAqIG12Ow0KICBtYXQ0IG12X3RpID0gdHJhbnNwb3NlKGludmVyc2UobXYpKTsgDQoNCiAgZ2xfUG9zaXRpb24gPSBtdnAgKiBwb3NpdGlvblZlYzQ7DQogIHBvc2l0aW9uQ2FtZXJhU3BhY2UgPSBtdiAqIHBvc2l0aW9uVmVjNDsNCiAgbm9ybWFsQ2FtZXJhU3BhY2UgPSBtdl90aSAqIG5vcm1hbFZlYzQ7DQp9DQo=","base64").toString();
+var fragmentShaderrStringCode = Buffer("I3ZlcnNpb24gMzAwIGVzDQoNCnByZWNpc2lvbiBtZWRpdW1wIGZsb2F0Ow0KDQppbiB2ZWM0IHBvc2l0aW9uQ2FtZXJhU3BhY2U7DQppbiB2ZWM0IG5vcm1hbENhbWVyYVNwYWNlOw0KDQp1bmlmb3JtIHZlYzMgbGlnaHRQb3NpdGlvbjsNCg0KdW5pZm9ybSB2ZWMzIG1hdGVyaWFsQW1iaWVudDsNCnVuaWZvcm0gdmVjMyBtYXRlcmlhbERpZmZ1c2U7DQp1bmlmb3JtIHZlYzMgbWF0ZXJpYWxTcGVjdWxhcjsNCnVuaWZvcm0gZmxvYXQgbWF0ZXJpYWxTaGluaW5lc3M7DQogDQpvdXQgdmVjNCBvdXRDb2xvcjsNCg0Kdm9pZCBtYWluKCkgew0KICB2ZWMzIGZyYWdtZW50Tm9ybWFsID0gbm9ybWFsaXplKG5vcm1hbENhbWVyYVNwYWNlLnh5eik7DQogIHZlYzMgbGlnaHREaXIgPSBub3JtYWxpemUobGlnaHRQb3NpdGlvbiAtIHBvc2l0aW9uQ2FtZXJhU3BhY2UueHl6KTsNCiAgZmxvYXQgaW5jaWRlbmNlID0gZG90KGZyYWdtZW50Tm9ybWFsLCBsaWdodERpcik7DQoNCiAgdmVjMyBhbWJpZW50Q29sb3IgPSB2ZWMzKDAuMCwgMC4wLCAwLjApOw0KICB2ZWMzIGRpZmZ1c2VDb2xvciA9IHZlYzMoMC4wLCAwLjAsIDAuMCk7DQogIHZlYzMgc3BlY3VsYXJDb2xvciA9IHZlYzMoMC4wLCAwLjAsIDAuMCk7DQogIA0KICBhbWJpZW50Q29sb3IgPSBtYXRlcmlhbEFtYmllbnQ7DQogIGlmIChpbmNpZGVuY2UgPj0gMC4wKSB7DQogICAgZGlmZnVzZUNvbG9yID0gaW5jaWRlbmNlICogbWF0ZXJpYWxEaWZmdXNlOw0KDQogICAgdmVjMyBjYW1lcmFEaXIgPSBub3JtYWxpemUodmVjMygwLjAsIDAuMCwgMC4wKSAtIHBvc2l0aW9uQ2FtZXJhU3BhY2UueHl6KTsNCiAgICB2ZWMzIHN1bURpciA9IG5vcm1hbGl6ZShjYW1lcmFEaXIgKyBsaWdodERpcik7DQogICAgZmxvYXQgc3BlY3VsYXJGYWN0b3IgPSBwb3cobWF4KGRvdChmcmFnbWVudE5vcm1hbCwgc3VtRGlyKSwgMC4wKSwgbWF0ZXJpYWxTaGluaW5lc3MpOw0KDQogICAgc3BlY3VsYXJDb2xvciA9IHNwZWN1bGFyRmFjdG9yICogbWF0ZXJpYWxTcGVjdWxhcjsNCiAgfQ0KDQogIG91dENvbG9yID0gdmVjNChhbWJpZW50Q29sb3IgKyBkaWZmdXNlQ29sb3IgKyBzcGVjdWxhckNvbG9yLCAxLjApOw0KfQ0K","base64").toString();
 initCanvas('canvas_id');
 function initCanvas(canvasId) {
     var htmlCanvasElement = document.getElementById(canvasId);
@@ -19,13 +19,22 @@ function initCanvas(canvasId) {
     webGL2RenderingContext.viewport(0, 0, webGL2RenderingContext.canvas.width, webGL2RenderingContext.canvas.height);
     webGL2RenderingContext.clearColor(0, 0, 0, 0);
     webGL2RenderingContext.useProgram(program);
-    var timeUniformLocation = webGL2RenderingContext.getUniformLocation(program, "currentTime");
-    testLoad(webGL2RenderingContext, timeUniformLocation, 100000, 10000);
+    var uniformLocations = {
+        m: webGL2RenderingContext.getUniformLocation(program, "m"),
+        v: webGL2RenderingContext.getUniformLocation(program, "v"),
+        p: webGL2RenderingContext.getUniformLocation(program, "p"),
+        lightPosition: webGL2RenderingContext.getUniformLocation(program, "lightPosition"),
+        materialAmbient: webGL2RenderingContext.getUniformLocation(program, "materialAmbient"),
+        materialDiffuse: webGL2RenderingContext.getUniformLocation(program, "materialDiffuse"),
+        materialSpecular: webGL2RenderingContext.getUniformLocation(program, "materialSpecular"),
+        materialShininess: webGL2RenderingContext.getUniformLocation(program, "materialShininess")
+    };
+    testLoad(webGL2RenderingContext, uniformLocations, 100000, 20000);
 }
-function testFinished(webGL2RenderingContext, timeUniformLocation, drawLoad, maxDuration) {
-    testLoad(webGL2RenderingContext, timeUniformLocation, 100000 + drawLoad, maxDuration);
+function testFinished(webGL2RenderingContext, uniformLocations, drawLoad, maxDuration) {
+    testLoad(webGL2RenderingContext, uniformLocations, 100000 + drawLoad, maxDuration);
 }
-function testLoad(webGL2RenderingContext, timeUniformLocation, drawLoad, maxDuration) {
+function testLoad(webGL2RenderingContext, uniformLocations, drawLoad, maxDuration) {
     console.log("===================================");
     console.log("Test drawLoad =", drawLoad);
     var loadInitialTime = new Date().getTime();
@@ -38,7 +47,7 @@ function testLoad(webGL2RenderingContext, timeUniformLocation, drawLoad, maxDura
     var frameCount = 0;
     function loop() {
         var currentTime = new Date().getTime() - initialTime;
-        draw(webGL2RenderingContext, timeUniformLocation, currentTime, drawLoad);
+        draw(webGL2RenderingContext, uniformLocations, currentTime, drawLoad);
         frameCount += 1;
         if (currentTime < maxDuration) {
             window.requestAnimationFrame(loop);
@@ -51,44 +60,149 @@ function testLoad(webGL2RenderingContext, timeUniformLocation, drawLoad, maxDura
             console.log("Time elapsed =", currentTime / 1000.0, "seconds");
             console.log("FPS =", fps);
             console.log(drawLoad, loadTime, currentTime / 1000.0, fps);
-            testFinished(webGL2RenderingContext, timeUniformLocation, drawLoad, maxDuration);
+            testFinished(webGL2RenderingContext, uniformLocations, drawLoad, maxDuration);
         }
     }
     loop();
 }
-function draw(webGL2RenderingContext, timeUniformLocation, currentTime, drawLoad) {
+function draw(webGL2RenderingContext, uniformLocations, currentTime, drawLoad) {
     webGL2RenderingContext.clear(webGL2RenderingContext.COLOR_BUFFER_BIT);
-    webGL2RenderingContext.uniform1f(timeUniformLocation, currentTime / 1000.0);
+    webGL2RenderingContext.enable(webGL2RenderingContext.DEPTH_TEST);
+    webGL2RenderingContext.uniformMatrix4fv(uniformLocations.m, false, new Float32Array([Math.cos(currentTime / 1000), 0, Math.sin(currentTime / 1000), 0,
+        0, 1, 0, 0,
+        -Math.sin(currentTime / 1000), 0, Math.cos(currentTime / 1000), 0,
+        0, -2, 0, 1]));
+    webGL2RenderingContext.uniformMatrix4fv(uniformLocations.v, false, new Float32Array([1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, -2, 1]));
+    webGL2RenderingContext.uniformMatrix4fv(uniformLocations.p, false, new Float32Array(webgl_basics_1.projectionMatrix(5.0, 5.0, 1.0, 20.0)));
+    console.log(currentTime);
+    webGL2RenderingContext.uniform3f(uniformLocations.lightPosition, 0.0, 0.0, 0.0);
+    webGL2RenderingContext.uniform3f(uniformLocations.materialAmbient, 0.1, 0.0, 0.0);
+    webGL2RenderingContext.uniform3f(uniformLocations.materialDiffuse, 1.0, 0.0, 0.0);
+    webGL2RenderingContext.uniform3f(uniformLocations.materialSpecular, 1.0, 1.0, 1.0);
+    webGL2RenderingContext.uniform1f(uniformLocations.materialShininess, 24.0);
     var primitiveType = webGL2RenderingContext.TRIANGLES;
     var drawArrays_offset = 0;
-    var count = 3 * drawLoad;
+    var count = 36; // 3 * drawLoad;
     webGL2RenderingContext.drawArrays(primitiveType, drawArrays_offset, count);
 }
 function createDataBuffer(webGL2RenderingContext, vao, drawLoad) {
     var positionBuffer = webGL2RenderingContext.createBuffer();
     webGL2RenderingContext.bindVertexArray(vao);
     webGL2RenderingContext.bindBuffer(webGL2RenderingContext.ARRAY_BUFFER, positionBuffer);
-    var positions = [];
-    var N = drawLoad;
-    for (var i = 0; i < N; i++) {
-        positions.push(Math.cos(2.0 * Math.PI * i / N));
-        positions.push(Math.sin(2.0 * Math.PI * i / N));
-        positions.push(0.0);
-        positions.push(Math.cos(2.0 * Math.PI * (i + 1) / N));
-        positions.push(Math.sin(2.0 * Math.PI * (i + 1) / N));
-        positions.push(0.0);
-        positions.push(0.0);
-        positions.push(0.0);
-        positions.push(0.0);
+    // const positions: number[] = [];
+    // const N = drawLoad;
+    // for(let i = 0; i < N; i++) {
+    //   positions.push(Math.cos(2.0*Math.PI*i/N));
+    //   positions.push(Math.sin(2.0*Math.PI*i/N));
+    //   positions.push(0.0);
+    //   positions.push(Math.cos(2.0*Math.PI*(i+1)/N));
+    //   positions.push(Math.sin(2.0*Math.PI*(i+1)/N));
+    //   positions.push(0.0);
+    //   positions.push(0.0);
+    //   positions.push(0.0);
+    //   positions.push(0.0);
+    // }
+    var positions = [
+        -1, -1, -1,
+        1, -1, -1,
+        1, 1, -1,
+        1, 1, -1,
+        -1, 1, -1,
+        -1, -1, -1,
+        1, 1, -1,
+        1, -1, -1,
+        1, -1, 1,
+        1, 1, 1,
+        1, 1, -1,
+        1, -1, 1,
+        1, 1, 1,
+        -1, 1, 1,
+        1, -1, 1,
+        -1, 1, 1,
+        -1, -1, 1,
+        1, -1, 1,
+        -1, 1, 1,
+        -1, -1, 1,
+        -1, -1, -1,
+        -1, 1, -1,
+        -1, 1, 1,
+        -1, -1, -1,
+        -1, 1, 1,
+        -1, 1, -1,
+        1, 1, -1,
+        1, 1, -1,
+        1, 1, 1,
+        -1, 1, 1,
+        1, -1, 1,
+        -1, -1, -1,
+        -1, -1, 1,
+        1, -1, 1,
+        1, -1, -1,
+        -1, -1, -1
+    ];
+    var normals = [
+        0, 0, -1,
+        0, 0, -1,
+        0, 0, -1,
+        0, 0, -1,
+        0, 0, -1,
+        0, 0, -1,
+        1, 0, 0,
+        1, 0, 0,
+        1, 0, 0,
+        1, 0, 0,
+        1, 0, 0,
+        1, 0, 0,
+        0, 0, 1,
+        0, 0, 1,
+        0, 0, 1,
+        0, 0, 1,
+        0, 0, 1,
+        0, 0, 1,
+        -1, 0, 0,
+        -1, 0, 0,
+        -1, 0, 0,
+        -1, 0, 0,
+        -1, 0, 0,
+        -1, 0, 0,
+        0, 1, 0,
+        0, 1, 0,
+        0, 1, 0,
+        0, 1, 0,
+        0, 1, 0,
+        0, 1, 0,
+        0, -1, 0,
+        0, -1, 0,
+        0, -1, 0,
+        0, -1, 0,
+        0, -1, 0,
+        0, -1, 0,
+    ];
+    var bufferArray = [];
+    for (var i = 0; i < positions.length / 3; i++) {
+        bufferArray.push(positions[3 * i + 0]);
+        bufferArray.push(positions[3 * i + 1]);
+        bufferArray.push(positions[3 * i + 2]);
+        bufferArray.push(normals[3 * i + 0]);
+        bufferArray.push(normals[3 * i + 1]);
+        bufferArray.push(normals[3 * i + 2]);
     }
-    webGL2RenderingContext.bufferData(webGL2RenderingContext.ARRAY_BUFFER, new Float32Array(positions), webGL2RenderingContext.STATIC_DRAW);
+    webGL2RenderingContext.bufferData(webGL2RenderingContext.ARRAY_BUFFER, new Float32Array(bufferArray), webGL2RenderingContext.STATIC_DRAW);
     webGL2RenderingContext.enableVertexAttribArray(0);
-    var size = 3; // 2 components per iteration
-    var type = webGL2RenderingContext.FLOAT; // the data is 32bit floats
-    var normalize = false; // don't normalize the data
-    var stride = 0; // 0 = move forward size * sizeof(type) each iteration to get the next position
-    var vertexAttribPointer_offset = 0; // start at the beginning of the buffer
-    webGL2RenderingContext.vertexAttribPointer(0, size, type, normalize, stride, vertexAttribPointer_offset);
+    webGL2RenderingContext.vertexAttribPointer(0, 3, // size
+    webGL2RenderingContext.FLOAT, // type
+    false, // normalize
+    6 * 4, // stride
+    0 * 4); //offset
+    webGL2RenderingContext.enableVertexAttribArray(1);
+    webGL2RenderingContext.vertexAttribPointer(1, 3, // size
+    webGL2RenderingContext.FLOAT, // type
+    false, // normalize
+    6 * 4, // stride
+    3 * 4); //offset                                            
     return positionBuffer;
 }
 function loadDataInGPU(webGL2RenderingContext, drawLoad) {
@@ -126,6 +240,13 @@ function createProgram(webGL2RenderingContext, vertexShader, fragmentShader) {
     webGL2RenderingContext.deleteProgram(program);
 }
 exports.createProgram = createProgram;
+function projectionMatrix(width, height, near, far) {
+    return [2.0 / width, 0, 0, 0,
+        0, 2.0 / height, 0, 0,
+        0, 0, -2.0 / (far - near), -(far + near) / (far - near),
+        0, 0, 0, 1];
+}
+exports.projectionMatrix = projectionMatrix;
 
 },{}],3:[function(require,module,exports){
 'use strict'

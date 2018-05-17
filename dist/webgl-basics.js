@@ -25,4 +25,11 @@ function createProgram(webGL2RenderingContext, vertexShader, fragmentShader) {
     webGL2RenderingContext.deleteProgram(program);
 }
 exports.createProgram = createProgram;
+function projectionMatrix(width, height, near, far) {
+    return [2.0 / width, 0, 0, 0,
+        0, 2.0 / height, 0, 0,
+        0, 0, -2.0 / (far - near), -(far + near) / (far - near),
+        0, 0, 0, 1];
+}
+exports.projectionMatrix = projectionMatrix;
 //# sourceMappingURL=webgl-basics.js.map

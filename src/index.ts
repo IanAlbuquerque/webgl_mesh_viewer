@@ -35,11 +35,11 @@ function initCanvas(canvasId: string): void {
     materialShininess:  webGL2RenderingContext.getUniformLocation(program, "materialShininess")
   }
 
-  testLoad(webGL2RenderingContext, uniformLocations, 100000, 20000);  
+  testLoad(webGL2RenderingContext, uniformLocations, 1, 2000);  
 }
 
 function testFinished(webGL2RenderingContext: WebGL2RenderingContext, uniformLocations, drawLoad: number, maxDuration: number): void {
-  testLoad(webGL2RenderingContext, uniformLocations, 100000 + drawLoad, maxDuration);
+  testLoad(webGL2RenderingContext, uniformLocations, 1 + drawLoad, maxDuration);
 }
 
 function testLoad(webGL2RenderingContext: WebGL2RenderingContext, uniformLocations, drawLoad: number, maxDuration: number): void {
@@ -80,16 +80,15 @@ function draw(webGL2RenderingContext: WebGL2RenderingContext, uniformLocations, 
   webGL2RenderingContext.clear(webGL2RenderingContext.COLOR_BUFFER_BIT);
   webGL2RenderingContext.enable(webGL2RenderingContext.DEPTH_TEST);
 
-  webGL2RenderingContext.uniformMatrix4fv(uniformLocations.m, false, new Float32Array([ Math.cos(currentTime/1000), 0, Math.sin(currentTime/1000), 0,
+  webGL2RenderingContext.uniformMatrix4fv(uniformLocations.m, false, new Float32Array([ Math.cos(10*currentTime/1000), 0, Math.sin(10*currentTime/1000), 0,
                                                                                         0, 1, 0, 0,
-                                                                                        - Math.sin(currentTime/1000), 0, Math.cos(currentTime/1000), 0,
-                                                                                        0, -2, 0, 1]));
+                                                                                        - Math.sin(10*currentTime/1000), 0, Math.cos(10*currentTime/1000), 0,
+                                                                                        0, 0, 0, 1]));
   webGL2RenderingContext.uniformMatrix4fv(uniformLocations.v, false, new Float32Array([ 1, 0, 0, 0,
                                                                                         0, 1, 0, 0,
                                                                                         0, 0, 1, 0,
                                                                                         0, 0, -2, 1]));
-  webGL2RenderingContext.uniformMatrix4fv(uniformLocations.p, false, new Float32Array(projectionMatrix(5.0, 5.0, 1.0, 20.0)));
-  console.log(currentTime);
+  webGL2RenderingContext.uniformMatrix4fv(uniformLocations.p, false, new Float32Array(projectionMatrix(1.0, 1.0, 1.0, 20.0)));
   webGL2RenderingContext.uniform3f(uniformLocations.lightPosition, 0.0, 0.0, 0.0);      
   webGL2RenderingContext.uniform3f(uniformLocations.materialAmbient, 0.1, 0.0, 0.0);    
   webGL2RenderingContext.uniform3f(uniformLocations.materialDiffuse, 1.0, 0.0, 0.0);    
@@ -98,8 +97,34 @@ function draw(webGL2RenderingContext: WebGL2RenderingContext, uniformLocations, 
 
   const primitiveType = webGL2RenderingContext.TRIANGLES;
   const drawArrays_offset = 0;
-  const count = 36 // 3 * drawLoad;
+  const count = 3 * drawLoad;
   webGL2RenderingContext.drawArrays(primitiveType, drawArrays_offset, count);
+}
+
+function genPositionsAndNormals(drawLoad: number): number[] {
+  const n: number = Math.ceil(Math.cbrt(drawLoad));
+  const d = 2.0 / n;
+  let x = 0;
+  let y = 0;
+  let z = 0;
+  let numTrianglesDrawn = 0;
+  const buffer: number[] = [];
+  for(let i = 0; i < n && numTrianglesDrawn < drawLoad; i++) {
+    for(let j = 0; j < n && numTrianglesDrawn < drawLoad; j++) {
+      for(let k = 0; k < n && numTrianglesDrawn < drawLoad; k++) {
+        x = -1.0 + d*i;
+        y = -1.0 + d*j;
+        z = -1.0 + d*k;
+        buffer.push(x); buffer.push(y); buffer.push(z);
+        buffer.push(1.0); buffer.push(1.0); buffer.push(1.0);
+        buffer.push(x+d); buffer.push(y); buffer.push(z);
+        buffer.push(1.0); buffer.push(1.0); buffer.push(1.0);
+        buffer.push(x); buffer.push(y+d); buffer.push(z+d);
+        buffer.push(1.0); buffer.push(1.0); buffer.push(1.0);
+      }
+    }
+  }
+  return buffer;
 }
 
 function createDataBuffer(  webGL2RenderingContext: WebGL2RenderingContext, 
@@ -110,122 +135,8 @@ function createDataBuffer(  webGL2RenderingContext: WebGL2RenderingContext,
   webGL2RenderingContext.bindVertexArray(vao);
 
   webGL2RenderingContext.bindBuffer(webGL2RenderingContext.ARRAY_BUFFER, positionBuffer);
-  // const positions: number[] = [];
-  // const N = drawLoad;
-  // for(let i = 0; i < N; i++) {
-  //   positions.push(Math.cos(2.0*Math.PI*i/N));
-  //   positions.push(Math.sin(2.0*Math.PI*i/N));
-  //   positions.push(0.0);
 
-  //   positions.push(Math.cos(2.0*Math.PI*(i+1)/N));
-  //   positions.push(Math.sin(2.0*Math.PI*(i+1)/N));
-  //   positions.push(0.0);
-
-  //   positions.push(0.0);
-  //   positions.push(0.0);
-  //   positions.push(0.0);
-  // }
-  const positions: number[] = [
-    -1, -1, -1,
-    1, -1, -1,
-    1, 1, -1,
-
-    1, 1, -1,
-    -1, 1, -1,
-    -1, -1, -1,
-
-    1, 1, -1,
-    1, -1, -1,
-    1, -1, 1,
-
-    1, 1, 1,
-    1, 1, -1,
-    1, -1, 1,
-
-    1, 1, 1,
-    -1, 1, 1,
-    1, -1, 1,
-    
-    -1, 1, 1,
-    -1, -1, 1,
-    1, -1, 1,
-
-    -1, 1, 1,
-    -1, -1, 1,
-    -1, -1, -1,
-
-    -1, 1, -1,
-    -1, 1, 1,
-    -1, -1, -1,
-
-    -1, 1, 1,
-    -1, 1, -1,
-    1, 1, -1,
-
-    1, 1, -1,
-    1, 1, 1,
-    -1, 1, 1,
-
-    1, -1, 1,
-    -1, -1, -1,
-    -1, -1, 1,
-
-    1, -1, 1,
-    1, -1, -1,
-    -1, -1, -1
-  ];
-  const normals: number[] = [
-    0, 0, -1,
-    0, 0, -1,
-    0, 0, -1,
-    0, 0, -1,
-    0, 0, -1,
-    0, 0, -1,
-
-    1, 0, 0,
-    1, 0, 0,
-    1, 0, 0,
-    1, 0, 0,
-    1, 0, 0,
-    1, 0, 0,
-
-    0, 0, 1,
-    0, 0, 1,
-    0, 0, 1,
-    0, 0, 1,
-    0, 0, 1,
-    0, 0, 1,
-
-    -1, 0, 0,
-    -1, 0, 0,
-    -1, 0, 0,
-    -1, 0, 0,
-    -1, 0, 0,
-    -1, 0, 0,
-
-    0, 1, 0,
-    0, 1, 0,
-    0, 1, 0,
-    0, 1, 0,
-    0, 1, 0,
-    0, 1, 0,
-
-    0, -1, 0,
-    0, -1, 0,
-    0, -1, 0,
-    0, -1, 0,
-    0, -1, 0,
-    0, -1, 0,
-  ];
-  let bufferArray: number[] = [];
-  for (let i = 0; i < positions.length / 3; i++) {
-    bufferArray.push(positions[3 * i + 0]);
-    bufferArray.push(positions[3 * i + 1]);
-    bufferArray.push(positions[3 * i + 2]);
-    bufferArray.push(normals[3 * i + 0]);
-    bufferArray.push(normals[3 * i + 1]);
-    bufferArray.push(normals[3 * i + 2]);
-  }
+  let bufferArray: number[] = genPositionsAndNormals(drawLoad);
 
   webGL2RenderingContext.bufferData(  webGL2RenderingContext.ARRAY_BUFFER,
                                       new Float32Array(bufferArray),

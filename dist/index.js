@@ -5,8 +5,16 @@ var fs = require('fs');
 var vertexShaderStringCode = fs.readFileSync(__dirname + './../shaders/vertex.glsl').toString();
 var fragmentShaderrStringCode = fs.readFileSync(__dirname + './../shaders/fragment.glsl').toString();
 initCanvas('canvas_id');
+var resW;
+var resH;
 function initCanvas(canvasId) {
     var htmlCanvasElement = document.getElementById(canvasId);
+    var href = window.location.href;
+    var url = new URL(href);
+    resW = Number(url.searchParams.get('w'));
+    resH = Number(url.searchParams.get('h'));
+    htmlCanvasElement.width = resW;
+    htmlCanvasElement.height = resH;
     var webGL2RenderingContext = htmlCanvasElement.getContext("webgl2");
     if (!webGL2RenderingContext) {
         throw 'WebGL2 not supported.';
@@ -27,20 +35,20 @@ function initCanvas(canvasId) {
         materialSpecular: webGL2RenderingContext.getUniformLocation(program, "materialSpecular"),
         materialShininess: webGL2RenderingContext.getUniformLocation(program, "materialShininess")
     };
-    testLoad(webGL2RenderingContext, uniformLocations, 1, 2000);
+    console.log("WIDTH | HEIGHT | DRAWLOAD | GPU LOAD TIME | TIME ELAPSED | AVG FPS");
+    testLoad(webGL2RenderingContext, uniformLocations, 100000, 10000);
 }
 function testFinished(webGL2RenderingContext, uniformLocations, drawLoad, maxDuration) {
-    testLoad(webGL2RenderingContext, uniformLocations, 1 + drawLoad, maxDuration);
+    testLoad(webGL2RenderingContext, uniformLocations, 100000 + drawLoad, maxDuration);
 }
 function testLoad(webGL2RenderingContext, uniformLocations, drawLoad, maxDuration) {
-    console.log("===================================");
-    console.log("Test drawLoad =", drawLoad);
+    var htmlCanvasElement = document.getElementById('canvas_id');
+    var data = genPositionsAndNormals(drawLoad);
     var loadInitialTime = new Date().getTime();
-    var buffers = loadDataInGPU(webGL2RenderingContext, drawLoad);
+    var buffers = loadDataInGPU(webGL2RenderingContext, data);
     webGL2RenderingContext.bindVertexArray(buffers.vao);
     var loadEndTime = new Date().getTime();
     var loadTime = (loadEndTime - loadInitialTime) / 1000.0;
-    console.log("Load Time =", loadTime, "seconds");
     var initialTime = new Date().getTime();
     var frameCount = 0;
     function loop() {
@@ -54,10 +62,7 @@ function testLoad(webGL2RenderingContext, uniformLocations, drawLoad, maxDuratio
             var fps = frameCount / (currentTime / 1000.0);
             webGL2RenderingContext.deleteBuffer(buffers.buffer);
             webGL2RenderingContext.deleteVertexArray(buffers.vao);
-            console.log("Finishing test with drawLoad =", drawLoad);
-            console.log("Time elapsed =", currentTime / 1000.0, "seconds");
-            console.log("FPS =", fps);
-            console.log(drawLoad, loadTime, currentTime / 1000.0, fps);
+            console.log(resW, resH, drawLoad, loadTime, currentTime / 1000.0, fps);
             testFinished(webGL2RenderingContext, uniformLocations, drawLoad, maxDuration);
         }
     }
@@ -66,18 +71,17 @@ function testLoad(webGL2RenderingContext, uniformLocations, drawLoad, maxDuratio
 function draw(webGL2RenderingContext, uniformLocations, currentTime, drawLoad) {
     webGL2RenderingContext.clear(webGL2RenderingContext.COLOR_BUFFER_BIT);
     webGL2RenderingContext.enable(webGL2RenderingContext.DEPTH_TEST);
-    webGL2RenderingContext.uniformMatrix4fv(uniformLocations.m, false, new Float32Array([Math.cos(10 * currentTime / 1000), 0, Math.sin(10 * currentTime / 1000), 0,
+    webGL2RenderingContext.uniformMatrix4fv(uniformLocations.m, false, new Float32Array([Math.cos(currentTime / 1000), 0, Math.sin(currentTime / 1000), 0,
         0, 1, 0, 0,
-        -Math.sin(10 * currentTime / 1000), 0, Math.cos(10 * currentTime / 1000), 0,
+        -Math.sin(currentTime / 1000), 0, Math.cos(currentTime / 1000), 0,
         0, 0, 0, 1]));
     webGL2RenderingContext.uniformMatrix4fv(uniformLocations.v, false, new Float32Array([1, 0, 0, 0,
         0, 1, 0, 0,
         0, 0, 1, 0,
         0, 0, -2, 1]));
     webGL2RenderingContext.uniformMatrix4fv(uniformLocations.p, false, new Float32Array(webgl_basics_1.projectionMatrix(1.0, 1.0, 1.0, 20.0)));
-    // console.log(currentTime);
     webGL2RenderingContext.uniform3f(uniformLocations.lightPosition, 0.0, 0.0, 0.0);
-    webGL2RenderingContext.uniform3f(uniformLocations.materialAmbient, 0.1, 0.0, 0.0);
+    webGL2RenderingContext.uniform3f(uniformLocations.materialAmbient, 0.3, 0.0, 0.0);
     webGL2RenderingContext.uniform3f(uniformLocations.materialDiffuse, 1.0, 0.0, 0.0);
     webGL2RenderingContext.uniform3f(uniformLocations.materialSpecular, 1.0, 1.0, 1.0);
     webGL2RenderingContext.uniform1f(uniformLocations.materialShininess, 24.0);
@@ -123,174 +127,11 @@ function genPositionsAndNormals(drawLoad) {
     }
     return buffer;
 }
-// function getRandomPoint(): number[] {
-//   const point: number[] = [];
-//   for(let i=0; i<3; i++) {
-//     point.push(Math.random() * 2.0 - 1.0);
-//   }
-//   return point;
-// }
-// function dot(p: number[], q: number[]): number {
-//   let result = 0;
-//   for(let i=0; i<3; i++) {
-//     result += p[i]*q[i];
-//   }
-//   return result;
-// }
-// function cross(p: number[], q: number[]): number[] {
-//   return [  p[1]*q[2] - p[2]*q[1],
-//             -(p[0]*q[2]-p[2]*q[0]),
-//             p[0]*q[1] - p[1]*q[0] ]
-// }
-// function normalize(p: number[]): number[] {
-//   const norm: number = Math.sqrt(len2(p));
-//   for(let i=0; i<3; i++) {
-//     p[i] /= norm;
-//   }
-//   return p;
-// }
-// function len2(p: number[]): number {
-//   let result = 0;
-//   for(let i=0; i<3; i++) {
-//     result += p[i]*p[i];
-//   }
-//   return result;
-// }
-// function dif(p: number[], q: number[]): number[] {
-//   return [q[0]-p[0], q[1]-p[1], q[2]-p[2]];
-// }
-// function area2(p1: number[], p2: number[], p3: number[]): number {
-//   const side1 = dif(p1, p2);
-//   const side2 = dif(p1, p3);
-//   const d1 = len2(side1);
-//   const d2 = len2(side2);
-//   const cos = dot(side1, side2) / (d1 * d2);
-//   const sin2 = 1 - (cos * cos);
-//   return d1 * d2 * sin2 / 4.0;
-// }
-// function getRandomTriangleWithNormal(): number[] {
-//   // Compute Triangle
-//   const p1: number[] = getRandomPoint();
-//   const p2: number[] = getRandomPoint();
-//   let p3: number[] = [];
-//   let area = 0;
-//   do {
-//     p3 = getRandomPoint();
-//     area = area2(p1, p2, p3);
-//   } while(area < 0.0000001);
-//   // Compute Normal
-//   const side1 = dif(p1, p2);
-//   const side2 = dif(p1, p3);
-//   const normal: number[] = normalize(cross(side1, side2));
-//   return p1.concat(normal, p2, normal, p3, normal);
-// }
-function createDataBuffer(webGL2RenderingContext, vao, drawLoad) {
+function createDataBuffer(webGL2RenderingContext, vao, data) {
     var positionBuffer = webGL2RenderingContext.createBuffer();
     webGL2RenderingContext.bindVertexArray(vao);
     webGL2RenderingContext.bindBuffer(webGL2RenderingContext.ARRAY_BUFFER, positionBuffer);
-    // const positions: number[] = [];
-    // const N = drawLoad;
-    // for(let i = 0; i < N; i++) {
-    //   positions.push(Math.cos(2.0*Math.PI*i/N));
-    //   positions.push(Math.sin(2.0*Math.PI*i/N));
-    //   positions.push(0.0);
-    //   positions.push(Math.cos(2.0*Math.PI*(i+1)/N));
-    //   positions.push(Math.sin(2.0*Math.PI*(i+1)/N));
-    //   positions.push(0.0);
-    //   positions.push(0.0);
-    //   positions.push(0.0);
-    //   positions.push(0.0);
-    // }
-    // const positions: number[] = [
-    //   -1, -1, -1,
-    //   1, -1, -1,
-    //   1, 1, -1,
-    //   1, 1, -1,
-    //   -1, 1, -1,
-    //   -1, -1, -1,
-    //   1, 1, -1,
-    //   1, -1, -1,
-    //   1, -1, 1,
-    //   1, 1, 1,
-    //   1, 1, -1,
-    //   1, -1, 1,
-    //   1, 1, 1,
-    //   -1, 1, 1,
-    //   1, -1, 1,
-    //   -1, 1, 1,
-    //   -1, -1, 1,
-    //   1, -1, 1,
-    //   -1, 1, 1,
-    //   -1, -1, 1,
-    //   -1, -1, -1,
-    //   -1, 1, -1,
-    //   -1, 1, 1,
-    //   -1, -1, -1,
-    //   -1, 1, 1,
-    //   -1, 1, -1,
-    //   1, 1, -1,
-    //   1, 1, -1,
-    //   1, 1, 1,
-    //   -1, 1, 1,
-    //   1, -1, 1,
-    //   -1, -1, -1,
-    //   -1, -1, 1,
-    //   1, -1, 1,
-    //   1, -1, -1,
-    //   -1, -1, -1
-    // ];
-    // const normals: number[] = [
-    //   0, 0, -1,
-    //   0, 0, -1,
-    //   0, 0, -1,
-    //   0, 0, -1,
-    //   0, 0, -1,
-    //   0, 0, -1,
-    //   1, 0, 0,
-    //   1, 0, 0,
-    //   1, 0, 0,
-    //   1, 0, 0,
-    //   1, 0, 0,
-    //   1, 0, 0,
-    //   0, 0, 1,
-    //   0, 0, 1,
-    //   0, 0, 1,
-    //   0, 0, 1,
-    //   0, 0, 1,
-    //   0, 0, 1,
-    //   -1, 0, 0,
-    //   -1, 0, 0,
-    //   -1, 0, 0,
-    //   -1, 0, 0,
-    //   -1, 0, 0,
-    //   -1, 0, 0,
-    //   0, 1, 0,
-    //   0, 1, 0,
-    //   0, 1, 0,
-    //   0, 1, 0,
-    //   0, 1, 0,
-    //   0, 1, 0,
-    //   0, -1, 0,
-    //   0, -1, 0,
-    //   0, -1, 0,
-    //   0, -1, 0,
-    //   0, -1, 0,
-    //   0, -1, 0,
-    // ];
-    var bufferArray = genPositionsAndNormals(drawLoad);
-    // for (let i = 0; i < drawLoad; i++) {
-    //   bufferArray = bufferArray.concat(getRandomTriangleWithNormal());
-    // }
-    // let bufferArray: number[] = [];
-    // for (let i = 0; i < positions.length / 3; i++) {
-    //   bufferArray.push(positions[3 * i + 0]);
-    //   bufferArray.push(positions[3 * i + 1]);
-    //   bufferArray.push(positions[3 * i + 2]);
-    //   bufferArray.push(normals[3 * i + 0]);
-    //   bufferArray.push(normals[3 * i + 1]);
-    //   bufferArray.push(normals[3 * i + 2]);
-    // }
-    webGL2RenderingContext.bufferData(webGL2RenderingContext.ARRAY_BUFFER, new Float32Array(bufferArray), webGL2RenderingContext.STATIC_DRAW);
+    webGL2RenderingContext.bufferData(webGL2RenderingContext.ARRAY_BUFFER, new Float32Array(data), webGL2RenderingContext.STATIC_DRAW);
     webGL2RenderingContext.enableVertexAttribArray(0);
     webGL2RenderingContext.vertexAttribPointer(0, 3, // size
     webGL2RenderingContext.FLOAT, // type
@@ -305,9 +146,9 @@ function createDataBuffer(webGL2RenderingContext, vao, drawLoad) {
     3 * 4); //offset                                            
     return positionBuffer;
 }
-function loadDataInGPU(webGL2RenderingContext, drawLoad) {
+function loadDataInGPU(webGL2RenderingContext, data) {
     var vao = webGL2RenderingContext.createVertexArray();
-    var buffer = createDataBuffer(webGL2RenderingContext, vao, drawLoad);
+    var buffer = createDataBuffer(webGL2RenderingContext, vao, data);
     return { vao: vao, buffer: buffer };
 }
 //# sourceMappingURL=index.js.map

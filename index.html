@@ -4,6 +4,7 @@
     <style>
       body {
         background-color: #000000;
+        color: #ffffff;
       }
 
       canvas {
@@ -14,7 +15,40 @@
     </style>
   </head>
   <body>
-    <canvas id="canvas_id" width="500" height="500"></canvas>
-    <script src="dist/bundle.js"></script>
+    <h2>
+      WebGL Benchmark by Ian Albuquerque
+    </h2>
+    <h3>
+      Test results will be displayed in the Browser's console.
+      <br/>
+      Close other applications for better results.
+      <br/>
+      Do not switch or close this tab.
+      <br/>
+    </h3>
+    <h2>
+      Change resolution in the form below:
+    </h2>
+    <p>
+      <form target="index.html">
+        Width = <input type="number" name="w"/>
+        Height = <input type="number" name="h"/>
+        <button type="submit">Submit</button>
+      </form>
+    </p>
+    <h3>
+      Common Resolutions:
+    </h3>
+    <p>
+      4:3 => 640×480, 800×600, 960×720, 1024×768, 1280×960, 1400×1050, 1440×1080 , 1600×1200, 1856×1392, 1920×1440, 2048×1536.
+      <br/>
+      16:10 => 1280×800, 1440×900, 1680×1050, 1920×1200 and 2560×1600.
+      <br/>
+      16:9 => 1024×576, 1152×648, 1280×720, 1366×768, 1600×900, 1920×1080, 2560×1440 and 3840×2160.
+    </p>
+    <p>
+      <canvas id="canvas_id" width="500" height="500"></canvas>
+      <script src="dist/bundle.js"></script>
+    </p>
   </body>
 </html>

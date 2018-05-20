@@ -8,8 +8,17 @@ const fragmentShaderrStringCode: string = fs.readFileSync(__dirname + './../shad
 
 initCanvas('canvas_id');
 
+let resW: number;
+let resH: number;
+
 function initCanvas(canvasId: string): void {
   const htmlCanvasElement: HTMLCanvasElement = <HTMLCanvasElement> document.getElementById(canvasId);
+  const href = window.location.href;
+  const url = new URL(href);
+  resW = Number(url.searchParams.get('w'));
+  resH = Number(url.searchParams.get('h'));
+  htmlCanvasElement.width = resW;
+  htmlCanvasElement.height = resH;
   const webGL2RenderingContext : WebGL2RenderingContext  = htmlCanvasElement.getContext("webgl2");
   if (!webGL2RenderingContext) {
     throw 'WebGL2 not supported.';
@@ -35,23 +44,24 @@ function initCanvas(canvasId: string): void {
     materialShininess:  webGL2RenderingContext.getUniformLocation(program, "materialShininess")
   }
 
-  testLoad(webGL2RenderingContext, uniformLocations, 1, 2000);  
+  console.log("WIDTH | HEIGHT | DRAWLOAD | GPU LOAD TIME | TIME ELAPSED | AVG FPS");
+  testLoad(webGL2RenderingContext, uniformLocations, 100000, 10000);  
 }
 
 function testFinished(webGL2RenderingContext: WebGL2RenderingContext, uniformLocations, drawLoad: number, maxDuration: number): void {
-  testLoad(webGL2RenderingContext, uniformLocations, 1 + drawLoad, maxDuration);
+  testLoad(webGL2RenderingContext, uniformLocations, 100000 + drawLoad, maxDuration);
 }
 
 function testLoad(webGL2RenderingContext: WebGL2RenderingContext, uniformLocations, drawLoad: number, maxDuration: number): void {
-  console.log("==================================="); 
-  console.log("Test drawLoad =", drawLoad);
+  
+  const htmlCanvasElement: HTMLCanvasElement = <HTMLCanvasElement> document.getElementById('canvas_id');
 
+  const data: number[] = genPositionsAndNormals(drawLoad);
   const loadInitialTime = new Date().getTime();
-  const buffers: { vao: WebGLVertexArrayObject, buffer: WebGLBuffer } = loadDataInGPU(webGL2RenderingContext, drawLoad);
+  const buffers: { vao: WebGLVertexArrayObject, buffer: WebGLBuffer } = loadDataInGPU(webGL2RenderingContext, data);
   webGL2RenderingContext.bindVertexArray(buffers.vao);
   const loadEndTime = new Date().getTime();
-  const loadTime = (loadEndTime - loadInitialTime) / 1000.0
-  console.log("Load Time =", loadTime, "seconds");
+  const loadTime = (loadEndTime - loadInitialTime) / 1000.0;
 
   const initialTime = new Date().getTime();
   let frameCount = 0;
@@ -65,10 +75,7 @@ function testLoad(webGL2RenderingContext: WebGL2RenderingContext, uniformLocatio
       const fps = frameCount / (currentTime/1000.0);
       webGL2RenderingContext.deleteBuffer(buffers.buffer)
       webGL2RenderingContext.deleteVertexArray(buffers.vao);
-      console.log("Finishing test with drawLoad =", drawLoad);
-      console.log("Time elapsed =", currentTime / 1000.0, "seconds");
-      console.log("FPS =", fps);
-      console.log(drawLoad, loadTime, currentTime / 1000.0, fps);
+      console.log(resW, resH, drawLoad, loadTime, currentTime / 1000.0, fps);
       testFinished(webGL2RenderingContext, uniformLocations, drawLoad, maxDuration);
     }
   }
@@ -80,9 +87,9 @@ function draw(webGL2RenderingContext: WebGL2RenderingContext, uniformLocations, 
   webGL2RenderingContext.clear(webGL2RenderingContext.COLOR_BUFFER_BIT);
   webGL2RenderingContext.enable(webGL2RenderingContext.DEPTH_TEST);
 
-  webGL2RenderingContext.uniformMatrix4fv(uniformLocations.m, false, new Float32Array([ Math.cos(10*currentTime/1000), 0, Math.sin(10*currentTime/1000), 0,
+  webGL2RenderingContext.uniformMatrix4fv(uniformLocations.m, false, new Float32Array([ Math.cos(currentTime/1000), 0, Math.sin(currentTime/1000), 0,
                                                                                         0, 1, 0, 0,
-                                                                                        - Math.sin(10*currentTime/1000), 0, Math.cos(10*currentTime/1000), 0,
+                                                                                        - Math.sin(currentTime/1000), 0, Math.cos(currentTime/1000), 0,
                                                                                         0, 0, 0, 1]));
   webGL2RenderingContext.uniformMatrix4fv(uniformLocations.v, false, new Float32Array([ 1, 0, 0, 0,
                                                                                         0, 1, 0, 0,
@@ -90,7 +97,7 @@ function draw(webGL2RenderingContext: WebGL2RenderingContext, uniformLocations, 
                                                                                         0, 0, -2, 1]));
   webGL2RenderingContext.uniformMatrix4fv(uniformLocations.p, false, new Float32Array(projectionMatrix(1.0, 1.0, 1.0, 20.0)));
   webGL2RenderingContext.uniform3f(uniformLocations.lightPosition, 0.0, 0.0, 0.0);      
-  webGL2RenderingContext.uniform3f(uniformLocations.materialAmbient, 0.1, 0.0, 0.0);    
+  webGL2RenderingContext.uniform3f(uniformLocations.materialAmbient, 0.3, 0.0, 0.0);    
   webGL2RenderingContext.uniform3f(uniformLocations.materialDiffuse, 1.0, 0.0, 0.0);    
   webGL2RenderingContext.uniform3f(uniformLocations.materialSpecular, 1.0, 1.0, 1.0);   
   webGL2RenderingContext.uniform1f(uniformLocations.materialShininess, 24.0);  
@@ -129,17 +136,15 @@ function genPositionsAndNormals(drawLoad: number): number[] {
 
 function createDataBuffer(  webGL2RenderingContext: WebGL2RenderingContext, 
                             vao: WebGLVertexArrayObject,
-                            drawLoad: number): WebGLBuffer { 
+                            data: number[] ): WebGLBuffer { 
   const positionBuffer: WebGLBuffer = webGL2RenderingContext.createBuffer();
 
   webGL2RenderingContext.bindVertexArray(vao);
 
   webGL2RenderingContext.bindBuffer(webGL2RenderingContext.ARRAY_BUFFER, positionBuffer);
 
-  let bufferArray: number[] = genPositionsAndNormals(drawLoad);
-
   webGL2RenderingContext.bufferData(  webGL2RenderingContext.ARRAY_BUFFER,
-                                      new Float32Array(bufferArray),
+                                      new Float32Array(data),
                                       webGL2RenderingContext.STATIC_DRAW);
 
   webGL2RenderingContext.enableVertexAttribArray(0);
@@ -162,8 +167,8 @@ function createDataBuffer(  webGL2RenderingContext: WebGL2RenderingContext,
 }
 
 function loadDataInGPU( webGL2RenderingContext: WebGL2RenderingContext,
-                        drawLoad: number): { vao: WebGLVertexArrayObject, buffer: WebGLBuffer } {
+                        data: number[] ): { vao: WebGLVertexArrayObject, buffer: WebGLBuffer } {
   const vao = webGL2RenderingContext.createVertexArray();
-  const buffer = createDataBuffer(webGL2RenderingContext, vao, drawLoad);
+  const buffer = createDataBuffer(webGL2RenderingContext, vao, data);
   return { vao: vao, buffer: buffer };
 }

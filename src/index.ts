@@ -1,7 +1,9 @@
 import { create } from "domain";
 import { createProgram, createShader, projectionMatrix } from "./webgl-basics";
+import { SSL_OP_MSIE_SSLV2_RSA_PADDING } from "constants";
 
 const fs = require('fs');
+const https = require('http');
 
 const vertexShaderStringCode: string = fs.readFileSync(__dirname + './../shaders/vertex.glsl').toString();
 const fragmentShaderrStringCode: string = fs.readFileSync(__dirname + './../shaders/fragment.glsl').toString();
@@ -11,25 +13,30 @@ initCanvas('canvas_id');
 let resW: number;
 let resH: number;
 
+
+//==================================
+
 function getRequest(url: string): Promise<any> {
   return new Promise<any>(
     function (resolve, reject) {
-      const request = new XMLHttpRequest();
-      request.onload = function () {
-        if (this.status === 200) {
-          resolve(this.response);
-        } else {
-          reject(new Error(this.statusText));
-        }
-      };
-      request.onerror = function () {
-        reject(new Error('XMLHttpRequest Error: ' + this.statusText));
-      };
-      request.open('GET', url);
-      request.send();
+      https.get('http://mesh-services.ianalbuquerque.com:8999/mesh/bunny', (resp) => {
+        let data = '';
+        // A chunk of data has been recieved.
+        resp.on('data', (chunk) => {
+          data += chunk;
+        });
+        // The whole response has been received. Print out the result.
+        resp.on('end', () => {
+          resolve(data);
+        });
+      }).on("error", (err) => {
+        reject(err);
+      });
     }
   );
 }
+
+//========================
 
 function initCanvas(canvasId: string): void {
   const htmlCanvasElement: HTMLCanvasElement = <HTMLCanvasElement> document.getElementById(canvasId);
@@ -43,11 +50,6 @@ function initCanvas(canvasId: string): void {
   if (!webGL2RenderingContext) {
     throw 'WebGL2 not supported.';
   }
-
-  getRequest(`localhost:8999/bunny`)
-  .then((data: any) => {
-    console.log(data);
-  });
 
   const vertexShader = createShader(webGL2RenderingContext, webGL2RenderingContext.VERTEX_SHADER, vertexShaderStringCode);
   const fragmentShader = createShader(webGL2RenderingContext, webGL2RenderingContext.FRAGMENT_SHADER, fragmentShaderrStringCode);
@@ -69,28 +71,33 @@ function initCanvas(canvasId: string): void {
     materialShininess:  webGL2RenderingContext.getUniformLocation(program, "materialShininess")
   }
 
-  startDrawLoop(webGL2RenderingContext, uniformLocations, 100000);  
+  startDrawLoop(webGL2RenderingContext, uniformLocations);  
 }
 
-function startDrawLoop(webGL2RenderingContext: WebGL2RenderingContext, uniformLocations, triangleCount: number): void {
+function startDrawLoop(webGL2RenderingContext: WebGL2RenderingContext, uniformLocations): void {
   
   const htmlCanvasElement: HTMLCanvasElement = <HTMLCanvasElement> document.getElementById('canvas_id');
 
-  const data: number[] = genPositionsAndNormals(triangleCount);
-  const loadInitialTime = new Date().getTime();
-  const buffers: { vao: WebGLVertexArrayObject, buffer: WebGLBuffer } = loadDataInGPU(webGL2RenderingContext, data);
-  webGL2RenderingContext.bindVertexArray(buffers.vao);
-  const loadEndTime = new Date().getTime();
-  const loadTime = (loadEndTime - loadInitialTime) / 1000.0;
+  genPositionsAndNormals()
+  .then( (info: { buffer: number[], triangleCount: number }) => {
+    let data: number[] = info.buffer;
+    let triangleCount: number = info.triangleCount;
 
-  const initialTime = new Date().getTime();
-  let frameCount = 0;
-  function loop() {
-    const currentTime: number = new Date().getTime() - initialTime;
-    draw(webGL2RenderingContext, uniformLocations, currentTime, triangleCount);
-    window.requestAnimationFrame(loop);
-  }
-  loop();
+    const loadInitialTime = new Date().getTime();
+    const buffers: { vao: WebGLVertexArrayObject, buffer: WebGLBuffer } = loadDataInGPU(webGL2RenderingContext, data);
+    webGL2RenderingContext.bindVertexArray(buffers.vao);
+    const loadEndTime = new Date().getTime();
+    const loadTime = (loadEndTime - loadInitialTime) / 1000.0;
+  
+    const initialTime = new Date().getTime();
+    let frameCount = 0;
+    function loop() {
+      const currentTime: number = new Date().getTime() - initialTime;
+      draw(webGL2RenderingContext, uniformLocations, currentTime, triangleCount);
+      window.requestAnimationFrame(loop);
+    }
+    loop();
+  });
 }
 
 function draw(webGL2RenderingContext: WebGL2RenderingContext, uniformLocations, currentTime, triangleCount) {
@@ -118,30 +125,45 @@ function draw(webGL2RenderingContext: WebGL2RenderingContext, uniformLocations, 
   webGL2RenderingContext.drawArrays(primitiveType, drawArrays_offset, count);
 }
 
-function genPositionsAndNormals(triangleCount: number): number[] {
-  const n: number = Math.ceil(Math.cbrt(triangleCount));
-  const d = 2.0 / n;
-  let x = 0;
-  let y = 0;
-  let z = 0;
-  let numTrianglesDrawn = 0;
-  const buffer: number[] = [];
-  for(let i = 0; i < n && numTrianglesDrawn < triangleCount; i++) {
-    for(let j = 0; j < n && numTrianglesDrawn < triangleCount; j++) {
-      for(let k = 0; k < n && numTrianglesDrawn < triangleCount; k++) {
-        x = -1.0 + d*i;
-        y = -1.0 + d*j;
-        z = -1.0 + d*k;
-        buffer.push(x); buffer.push(y); buffer.push(z);
-        buffer.push(1.0); buffer.push(1.0); buffer.push(1.0);
-        buffer.push(x+d); buffer.push(y); buffer.push(z);
-        buffer.push(1.0); buffer.push(1.0); buffer.push(1.0);
-        buffer.push(x); buffer.push(y+d); buffer.push(z+d);
-        buffer.push(1.0); buffer.push(1.0); buffer.push(1.0);
+function genPositionsAndNormals(): Promise<{ buffer: number[], triangleCount: number }>{
+  return getRequest(`mesh-services.ianalbuquerque.com:8999/mesh/bunny`)
+  .then((data: string) => {
+    const buffer: number[] = [];
+    let triangleCount: number = 0;
+    const words: string[] = data.replace( /\n/g, " " ).split( " " );
+    const vertices: { x: number, y: number; z: number }[] = [];
+    for(let i=0; i<words.length; i++) {
+      if(words[i].includes("v")) {
+        vertices.push({ x: +words[i+1], y: +words[i+2], z: +words[i+3]});
+        i+=3;
+        continue;
+      }
+      if(words[i].includes("f")) {
+        const v1: number = +words[i+1] - 1;
+        const v2: number = +words[i+2] - 1;
+        const v3: number = +words[i+3] - 1;
+        const normal: { x: number, y: number; z: number } = {
+          x: (vertices[v2].y - vertices[v1].y)*(vertices[v3].z - vertices[v1].z) - (vertices[v3].y - vertices[v1].y)*(vertices[v2].z - vertices[v1].z),
+          y: (vertices[v2].z - vertices[v1].z)*(vertices[v3].x - vertices[v1].x) - (vertices[v3].z - vertices[v1].z)*(vertices[v2].x - vertices[v1].x),
+          z: (vertices[v2].x - vertices[v1].y)*(vertices[v3].y - vertices[v1].y) - (vertices[v3].x - vertices[v1].x)*(vertices[v2].y - vertices[v1].y),
+        };
+        const normalNorm: number = Math.sqrt((normal.x * normal.x) + (normal.y * normal.y) + (normal.z * normal.z));
+        normal.x /= normalNorm;
+        normal.y /= normalNorm;
+        normal.z /= normalNorm;
+        buffer.push(vertices[v1].x); buffer.push(vertices[v1].y); buffer.push(vertices[v1].z);
+        buffer.push(normal.x); buffer.push(normal.y); buffer.push(normal.z);
+        buffer.push(vertices[v2].x); buffer.push(vertices[v2].y); buffer.push(vertices[v2].z);
+        buffer.push(normal.x); buffer.push(normal.y); buffer.push(normal.z);
+        buffer.push(vertices[v3].x); buffer.push(vertices[v3].y); buffer.push(vertices[v3].z);
+        buffer.push(normal.x); buffer.push(normal.y); buffer.push(normal.z);
+        i+=3;
+        triangleCount+=1;
+        continue;
       }
     }
-  }
-  return buffer;
+    return { buffer: buffer, triangleCount: triangleCount };
+  })
 }
 
 function createDataBuffer(  webGL2RenderingContext: WebGL2RenderingContext, 

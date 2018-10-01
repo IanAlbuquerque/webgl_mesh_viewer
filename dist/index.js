@@ -11,7 +11,7 @@ var resH;
 //==================================
 function getRequest(url) {
     return new Promise(function (resolve, reject) {
-        https.get('http://mesh-services.ianalbuquerque.com:8999/mesh/bunny', function (resp) {
+        https.get(url, function (resp) {
             var data = '';
             // A chunk of data has been recieved.
             resp.on('data', function (chunk) {
@@ -101,7 +101,13 @@ function draw(webGL2RenderingContext, uniformLocations, currentTime, triangleCou
     webGL2RenderingContext.drawArrays(primitiveType, drawArrays_offset, count);
 }
 function genPositionsAndNormals() {
-    return getRequest("mesh-services.ianalbuquerque.com:8999/mesh/bunny")
+    var href = window.location.href;
+    var url = new URL(href);
+    var meshName = url.searchParams.get('mesh');
+    if (meshName === null) {
+        meshName = "bunny";
+    }
+    return getRequest("http://mesh-services.ianalbuquerque.com:8999/mesh/" + meshName)
         .then(function (data) {
         var buffer = [];
         var triangleCount = 0;

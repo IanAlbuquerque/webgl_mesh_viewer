@@ -19,7 +19,7 @@ let resH: number;
 function getRequest(url: string): Promise<any> {
   return new Promise<any>(
     function (resolve, reject) {
-      https.get('http://mesh-services.ianalbuquerque.com:8999/mesh/bunny', (resp) => {
+      https.get(url, (resp) => {
         let data = '';
         // A chunk of data has been recieved.
         resp.on('data', (chunk) => {
@@ -126,7 +126,13 @@ function draw(webGL2RenderingContext: WebGL2RenderingContext, uniformLocations, 
 }
 
 function genPositionsAndNormals(): Promise<{ buffer: number[], triangleCount: number }>{
-  return getRequest(`mesh-services.ianalbuquerque.com:8999/mesh/bunny`)
+  const href = window.location.href;
+  const url = new URL(href);
+  let meshName = url.searchParams.get('mesh');
+  if(meshName === null) {
+    meshName = "bunny"
+  }
+  return getRequest(`http://mesh-services.ianalbuquerque.com:8999/mesh/` + meshName)
   .then((data: string) => {
     const buffer: number[] = [];
     let triangleCount: number = 0;

@@ -11,18 +11,43 @@ initCanvas('canvas_id');
 let resW: number;
 let resH: number;
 
+function getRequest(url: string): Promise<any> {
+  return new Promise<any>(
+    function (resolve, reject) {
+      const request = new XMLHttpRequest();
+      request.onload = function () {
+        if (this.status === 200) {
+          resolve(this.response);
+        } else {
+          reject(new Error(this.statusText));
+        }
+      };
+      request.onerror = function () {
+        reject(new Error('XMLHttpRequest Error: ' + this.statusText));
+      };
+      request.open('GET', url);
+      request.send();
+    }
+  );
+}
+
 function initCanvas(canvasId: string): void {
   const htmlCanvasElement: HTMLCanvasElement = <HTMLCanvasElement> document.getElementById(canvasId);
   const href = window.location.href;
   const url = new URL(href);
-  resW = Number(url.searchParams.get('w'));
-  resH = Number(url.searchParams.get('h'));
+  resW = 800;
+  resH = 600;
   htmlCanvasElement.width = resW;
   htmlCanvasElement.height = resH;
   const webGL2RenderingContext : WebGL2RenderingContext  = htmlCanvasElement.getContext("webgl2");
   if (!webGL2RenderingContext) {
     throw 'WebGL2 not supported.';
   }
+
+  getRequest(`localhost:8999/bunny`)
+  .then((data: any) => {
+    console.log(data);
+  });
 
   const vertexShader = createShader(webGL2RenderingContext, webGL2RenderingContext.VERTEX_SHADER, vertexShaderStringCode);
   const fragmentShader = createShader(webGL2RenderingContext, webGL2RenderingContext.FRAGMENT_SHADER, fragmentShaderrStringCode);
@@ -44,19 +69,14 @@ function initCanvas(canvasId: string): void {
     materialShininess:  webGL2RenderingContext.getUniformLocation(program, "materialShininess")
   }
 
-  console.log("WIDTH | HEIGHT | DRAWLOAD | GPU LOAD TIME | TIME ELAPSED | AVG FPS");
-  testLoad(webGL2RenderingContext, uniformLocations, 100000, 10000);  
+  startDrawLoop(webGL2RenderingContext, uniformLocations, 100000);  
 }
 
-function testFinished(webGL2RenderingContext: WebGL2RenderingContext, uniformLocations, drawLoad: number, maxDuration: number): void {
-  testLoad(webGL2RenderingContext, uniformLocations, 100000 + drawLoad, maxDuration);
-}
-
-function testLoad(webGL2RenderingContext: WebGL2RenderingContext, uniformLocations, drawLoad: number, maxDuration: number): void {
+function startDrawLoop(webGL2RenderingContext: WebGL2RenderingContext, uniformLocations, triangleCount: number): void {
   
   const htmlCanvasElement: HTMLCanvasElement = <HTMLCanvasElement> document.getElementById('canvas_id');
 
-  const data: number[] = genPositionsAndNormals(drawLoad);
+  const data: number[] = genPositionsAndNormals(triangleCount);
   const loadInitialTime = new Date().getTime();
   const buffers: { vao: WebGLVertexArrayObject, buffer: WebGLBuffer } = loadDataInGPU(webGL2RenderingContext, data);
   webGL2RenderingContext.bindVertexArray(buffers.vao);
@@ -67,23 +87,13 @@ function testLoad(webGL2RenderingContext: WebGL2RenderingContext, uniformLocatio
   let frameCount = 0;
   function loop() {
     const currentTime: number = new Date().getTime() - initialTime;
-    draw(webGL2RenderingContext, uniformLocations, currentTime, drawLoad);
-    frameCount += 1;
-    if (currentTime < maxDuration) {
-      window.requestAnimationFrame(loop);
-    } else {
-      const fps = frameCount / (currentTime/1000.0);
-      webGL2RenderingContext.deleteBuffer(buffers.buffer)
-      webGL2RenderingContext.deleteVertexArray(buffers.vao);
-      console.log(resW, resH, drawLoad, loadTime, currentTime / 1000.0, fps);
-      testFinished(webGL2RenderingContext, uniformLocations, drawLoad, maxDuration);
-    }
+    draw(webGL2RenderingContext, uniformLocations, currentTime, triangleCount);
+    window.requestAnimationFrame(loop);
   }
   loop();
-
 }
 
-function draw(webGL2RenderingContext: WebGL2RenderingContext, uniformLocations, currentTime, drawLoad) {
+function draw(webGL2RenderingContext: WebGL2RenderingContext, uniformLocations, currentTime, triangleCount) {
   webGL2RenderingContext.clear(webGL2RenderingContext.COLOR_BUFFER_BIT);
   webGL2RenderingContext.enable(webGL2RenderingContext.DEPTH_TEST);
 
@@ -104,21 +114,21 @@ function draw(webGL2RenderingContext: WebGL2RenderingContext, uniformLocations, 
 
   const primitiveType = webGL2RenderingContext.TRIANGLES;
   const drawArrays_offset = 0;
-  const count = 3 * drawLoad;
+  const count = 3 * triangleCount;
   webGL2RenderingContext.drawArrays(primitiveType, drawArrays_offset, count);
 }
 
-function genPositionsAndNormals(drawLoad: number): number[] {
-  const n: number = Math.ceil(Math.cbrt(drawLoad));
+function genPositionsAndNormals(triangleCount: number): number[] {
+  const n: number = Math.ceil(Math.cbrt(triangleCount));
   const d = 2.0 / n;
   let x = 0;
   let y = 0;
   let z = 0;
   let numTrianglesDrawn = 0;
   const buffer: number[] = [];
-  for(let i = 0; i < n && numTrianglesDrawn < drawLoad; i++) {
-    for(let j = 0; j < n && numTrianglesDrawn < drawLoad; j++) {
-      for(let k = 0; k < n && numTrianglesDrawn < drawLoad; k++) {
+  for(let i = 0; i < n && numTrianglesDrawn < triangleCount; i++) {
+    for(let j = 0; j < n && numTrianglesDrawn < triangleCount; j++) {
+      for(let k = 0; k < n && numTrianglesDrawn < triangleCount; k++) {
         x = -1.0 + d*i;
         y = -1.0 + d*j;
         z = -1.0 + d*k;

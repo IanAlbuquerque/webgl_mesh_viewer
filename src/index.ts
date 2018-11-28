@@ -14,7 +14,6 @@ initCanvas('canvas_id');
 let resW: number;
 let resH: number;
 
-
 //==================================
 
 function getRequest(url: string): Promise<any> {
@@ -152,12 +151,13 @@ function genPositionsAndNormals(): Promise<{ buffer: number[], triangleCount: nu
 
         const normal: Vector3 = normalFromTriangleVertices(vertices[v1], vertices[v2], vertices[v3]);
 
-        buffer.push(vertices[v1].x); buffer.push(vertices[v1].y); buffer.push(vertices[v1].z);
-        buffer.push(normal.x); buffer.push(normal.y); buffer.push(normal.z);
-        buffer.push(vertices[v2].x); buffer.push(vertices[v2].y); buffer.push(vertices[v2].z);
-        buffer.push(normal.x); buffer.push(normal.y); buffer.push(normal.z);
-        buffer.push(vertices[v3].x); buffer.push(vertices[v3].y); buffer.push(vertices[v3].z);
-        buffer.push(normal.x); buffer.push(normal.y); buffer.push(normal.z);
+        [].push.apply(buffer, vertices[v1].asArray()); // Syntax note: calls the push method for `buffer` for each element in `....asArray()`
+        [].push.apply(buffer, normal.asArray());
+        [].push.apply(buffer, vertices[v2].asArray());
+        [].push.apply(buffer, normal.asArray());
+        [].push.apply(buffer, vertices[v3].asArray());
+        [].push.apply(buffer, normal.asArray());
+
         i+=3;
         triangleCount+=1;
         continue;
@@ -202,7 +202,7 @@ function createDataBuffer(  webGL2RenderingContext: WebGL2RenderingContext,
 
 function loadDataInGPU( webGL2RenderingContext: WebGL2RenderingContext,
                         data: number[] ): { vao: WebGLVertexArrayObject, buffer: WebGLBuffer } {
-  const vao = webGL2RenderingContext.createVertexArray();
-  const buffer = createDataBuffer(webGL2RenderingContext, vao, data);
+  const vao: WebGLVertexArrayObject = webGL2RenderingContext.createVertexArray();
+  const buffer: WebGLBuffer = createDataBuffer(webGL2RenderingContext, vao, data);
   return { vao: vao, buffer: buffer };
 }

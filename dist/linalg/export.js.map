@@ -1,0 +1,1 @@
+{"version":3,"file":"export.js","sourceRoot":"","sources":["../../src/linalg/export.ts"],"names":[],"mappings":";;AAEA,2CAA0C;AAAjC,4BAAA,OAAO,CAAA;AAEhB,oCAA2C,CAAU,EAAE,CAAU,EAAE,CAAU;IAC3E,OAAO,CAAC,CAAC,QAAQ,CAAC,CAAC,CAAC,CAAC,KAAK,CAAC,CAAC,CAAC,QAAQ,CAAC,CAAC,CAAC,CAAC,CAAC,UAAU,EAAE,CAAC;AACzD,CAAC;AAFD,gEAEC"}

@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var webgl_basics_1 = require("./webgl-basics");
+var linalg_1 = require("./linalg");
 var fs = require('fs');
 var https = require('http');
 var vertexShaderStringCode = fs.readFileSync(__dirname + './../shaders/vertex.glsl').toString();
@@ -115,23 +116,15 @@ function genPositionsAndNormals() {
         var vertices = [];
         for (var i = 0; i < words.length; i++) {
             if (words[i].includes("v")) {
-                vertices.push({ x: +words[i + 1], y: +words[i + 2], z: +words[i + 3] });
+                vertices.push(new linalg_1.Vector3(+words[i + 1], +words[i + 2], +words[i + 3]));
                 i += 3;
                 continue;
             }
             if (words[i].includes("f")) {
-                var v1 = +words[i + 1] - 1;
+                var v1 = +words[i + 1] - 1; // Syntax note: +stringVariable evaluates stringVariable to a number
                 var v2 = +words[i + 2] - 1;
                 var v3 = +words[i + 3] - 1;
-                var normal = {
-                    x: (vertices[v2].y - vertices[v1].y) * (vertices[v3].z - vertices[v1].z) - (vertices[v3].y - vertices[v1].y) * (vertices[v2].z - vertices[v1].z),
-                    y: (vertices[v2].z - vertices[v1].z) * (vertices[v3].x - vertices[v1].x) - (vertices[v3].z - vertices[v1].z) * (vertices[v2].x - vertices[v1].x),
-                    z: (vertices[v2].x - vertices[v1].y) * (vertices[v3].y - vertices[v1].y) - (vertices[v3].x - vertices[v1].x) * (vertices[v2].y - vertices[v1].y),
-                };
-                var normalNorm = Math.sqrt((normal.x * normal.x) + (normal.y * normal.y) + (normal.z * normal.z));
-                normal.x /= normalNorm;
-                normal.y /= normalNorm;
-                normal.z /= normalNorm;
+                var normal = linalg_1.normalFromTriangleVertices(vertices[v1], vertices[v2], vertices[v3]);
                 buffer.push(vertices[v1].x);
                 buffer.push(vertices[v1].y);
                 buffer.push(vertices[v1].z);
@@ -155,6 +148,7 @@ function genPositionsAndNormals() {
                 continue;
             }
         }
+        console.log(triangleCount);
         return { buffer: buffer, triangleCount: triangleCount };
     });
 }

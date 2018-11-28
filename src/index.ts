@@ -1,5 +1,6 @@
 import { create } from "domain";
 import { createProgram, createShader, projectionMatrix } from "./webgl-basics";
+import { Vector3, normalFromTriangleVertices } from "./linalg";
 import { SSL_OP_MSIE_SSLV2_RSA_PADDING } from "constants";
 
 const fs = require('fs');
@@ -137,26 +138,20 @@ function genPositionsAndNormals(): Promise<{ buffer: number[], triangleCount: nu
     const buffer: number[] = [];
     let triangleCount: number = 0;
     const words: string[] = data.replace( /\n/g, " " ).split( " " );
-    const vertices: { x: number, y: number; z: number }[] = [];
+    const vertices: Vector3[] = [];
     for(let i=0; i<words.length; i++) {
       if(words[i].includes("v")) {
-        vertices.push({ x: +words[i+1], y: +words[i+2], z: +words[i+3]});
+        vertices.push(new Vector3( +words[i+1], +words[i+2], +words[i+3]));
         i+=3;
         continue;
       }
       if(words[i].includes("f")) {
-        const v1: number = +words[i+1] - 1;
+        const v1: number = +words[i+1] - 1; // Syntax note: +stringVariable evaluates stringVariable to a number
         const v2: number = +words[i+2] - 1;
         const v3: number = +words[i+3] - 1;
-        const normal: { x: number, y: number; z: number } = {
-          x: (vertices[v2].y - vertices[v1].y)*(vertices[v3].z - vertices[v1].z) - (vertices[v3].y - vertices[v1].y)*(vertices[v2].z - vertices[v1].z),
-          y: (vertices[v2].z - vertices[v1].z)*(vertices[v3].x - vertices[v1].x) - (vertices[v3].z - vertices[v1].z)*(vertices[v2].x - vertices[v1].x),
-          z: (vertices[v2].x - vertices[v1].y)*(vertices[v3].y - vertices[v1].y) - (vertices[v3].x - vertices[v1].x)*(vertices[v2].y - vertices[v1].y),
-        };
-        const normalNorm: number = Math.sqrt((normal.x * normal.x) + (normal.y * normal.y) + (normal.z * normal.z));
-        normal.x /= normalNorm;
-        normal.y /= normalNorm;
-        normal.z /= normalNorm;
+
+        const normal: Vector3 = normalFromTriangleVertices(vertices[v1], vertices[v2], vertices[v3]);
+
         buffer.push(vertices[v1].x); buffer.push(vertices[v1].y); buffer.push(vertices[v1].z);
         buffer.push(normal.x); buffer.push(normal.y); buffer.push(normal.z);
         buffer.push(vertices[v2].x); buffer.push(vertices[v2].y); buffer.push(vertices[v2].z);
@@ -168,6 +163,7 @@ function genPositionsAndNormals(): Promise<{ buffer: number[], triangleCount: nu
         continue;
       }
     }
+    console.log(triangleCount);
     return { buffer: buffer, triangleCount: triangleCount };
   })
 }

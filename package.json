@@ -18,7 +18,9 @@
   },
   "homepage": "https://github.com/IanAlbuquerque/webgl_mesh_viewer#readme",
   "dependencies": {
+    "@types/mathjs": "^4.4.3",
     "@types/webgl2": "0.0.3",
+    "mathjs": "^5.2.3",
     "uniq": "^1.0.1"
   },
   "devDependencies": {

@@ -110,35 +110,30 @@ function genPositionsAndNormals() {
     if (meshName === null) {
         meshName = "bunny";
     }
-    return getRequest("http://mesh-services.ianalbuquerque.com:8999/mesh/" + meshName)
+    // return getRequest(`http://mesh-services.ianalbuquerque.com:8999/mesh/` + meshName)
+    return getRequest("http://localhost:8999/mesh/" + meshName)
         .then(function (data) {
+        var cornerTable = JSON.parse(data);
         var buffer = [];
-        var triangleCount = 0;
-        var words = data.replace(/\n/g, " ").split(" ");
-        var vertices = [];
-        for (var i = 0; i < words.length; i++) {
-            if (words[i].includes("v")) {
-                vertices.push(new linalg_1.Vector3(+words[i + 1], +words[i + 2], +words[i + 3]));
-                i += 3;
-                continue;
-            }
-            if (words[i].includes("f")) {
-                var v1 = +words[i + 1] - 1; // Syntax note: +stringVariable evaluates stringVariable to a number
-                var v2 = +words[i + 2] - 1;
-                var v3 = +words[i + 3] - 1;
-                var normal = linalg_1.normalFromTriangleVertices(vertices[v1], vertices[v2], vertices[v3]);
-                [].push.apply(buffer, vertices[v1].asArray()); // Syntax note: calls the push method for `buffer` for each element in `....asArray()`
-                [].push.apply(buffer, normal.asArray());
-                [].push.apply(buffer, vertices[v2].asArray());
-                [].push.apply(buffer, normal.asArray());
-                [].push.apply(buffer, vertices[v3].asArray());
-                [].push.apply(buffer, normal.asArray());
-                i += 3;
-                triangleCount += 1;
-                continue;
-            }
+        var triangleCount = cornerTable.V.length / 3;
+        for (var i = 0; i < triangleCount; i++) {
+            var corner1 = i * 3;
+            var corner2 = (i * 3) + 1;
+            var corner3 = (i * 3) + 2;
+            var vertex1 = cornerTable.V[corner1];
+            var vertex2 = cornerTable.V[corner2];
+            var vertex3 = cornerTable.V[corner3];
+            var coordinates1 = new linalg_1.Vector3(cornerTable.G[vertex1 * 3 + 0], cornerTable.G[vertex1 * 3 + 1], cornerTable.G[vertex1 * 3 + 2]);
+            var coordinates2 = new linalg_1.Vector3(cornerTable.G[vertex2 * 3 + 0], cornerTable.G[vertex2 * 3 + 1], cornerTable.G[vertex2 * 3 + 2]);
+            var coordinates3 = new linalg_1.Vector3(cornerTable.G[vertex3 * 3 + 0], cornerTable.G[vertex3 * 3 + 1], cornerTable.G[vertex3 * 3 + 2]);
+            var normal = linalg_1.normalFromTriangleVertices(coordinates1, coordinates2, coordinates3);
+            [].push.apply(buffer, coordinates1.asArray()); // Syntax note: calls the push method for `buffer` for each element in `....asArray()`
+            [].push.apply(buffer, normal.asArray());
+            [].push.apply(buffer, coordinates2.asArray());
+            [].push.apply(buffer, normal.asArray());
+            [].push.apply(buffer, coordinates3.asArray());
+            [].push.apply(buffer, normal.asArray());
         }
-        console.log(triangleCount);
         return { buffer: buffer, triangleCount: triangleCount };
     });
 }

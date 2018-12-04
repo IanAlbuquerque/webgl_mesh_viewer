@@ -132,39 +132,39 @@ function genPositionsAndNormals(): Promise<{ buffer: number[], triangleCount: nu
   if(meshName === null) {
     meshName = "bunny"
   }
-  return getRequest(`http://mesh-services.ianalbuquerque.com:8999/mesh/` + meshName)
+  // return getRequest(`http://mesh-services.ianalbuquerque.com:8999/mesh/` + meshName)
+  return getRequest(`http://localhost:8999/mesh/` + meshName)  
   .then((data: string) => {
+    const cornerTable: { G: number[], V: number[], O: number[] } = JSON.parse(data) as { G: number[], V: number[], O: number[] };
     const buffer: number[] = [];
-    let triangleCount: number = 0;
-    const words: string[] = data.replace( /\n/g, " " ).split( " " );
-    const vertices: Vector3[] = [];
-    for(let i=0; i<words.length; i++) {
-      if(words[i].includes("v")) {
-        vertices.push(new Vector3( +words[i+1], +words[i+2], +words[i+3]));
-        i+=3;
-        continue;
-      }
-      if(words[i].includes("f")) {
-        const v1: number = +words[i+1] - 1; // Syntax note: +stringVariable evaluates stringVariable to a number
-        const v2: number = +words[i+2] - 1;
-        const v3: number = +words[i+3] - 1;
+    const triangleCount: number = cornerTable.V.length / 3;
 
-        const normal: Vector3 = normalFromTriangleVertices(vertices[v1], vertices[v2], vertices[v3]);
-
-        [].push.apply(buffer, vertices[v1].asArray()); // Syntax note: calls the push method for `buffer` for each element in `....asArray()`
-        [].push.apply(buffer, normal.asArray());
-        [].push.apply(buffer, vertices[v2].asArray());
-        [].push.apply(buffer, normal.asArray());
-        [].push.apply(buffer, vertices[v3].asArray());
-        [].push.apply(buffer, normal.asArray());
-
-        i+=3;
-        triangleCount+=1;
-        continue;
-      }
+    for(let i = 0; i < triangleCount; i++) {
+      const corner1 = i * 3;
+      const corner2 = (i * 3) + 1;
+      const corner3 = (i * 3) + 2;
+      const vertex1: number = cornerTable.V[corner1];
+      const vertex2: number = cornerTable.V[corner2];
+      const vertex3: number = cornerTable.V[corner3];
+      const coordinates1: Vector3 = new Vector3(cornerTable.G[vertex1 * 3 + 0],
+                                                cornerTable.G[vertex1 * 3 + 1],
+                                                cornerTable.G[vertex1 * 3 + 2]);
+      const coordinates2: Vector3 = new Vector3(cornerTable.G[vertex2 * 3 + 0],
+                                                cornerTable.G[vertex2 * 3 + 1],
+                                                cornerTable.G[vertex2 * 3 + 2]);
+      const coordinates3: Vector3 = new Vector3(cornerTable.G[vertex3 * 3 + 0],
+                                                cornerTable.G[vertex3 * 3 + 1],
+                                                cornerTable.G[vertex3 * 3 + 2]);
+      const normal: Vector3 = normalFromTriangleVertices(coordinates1, coordinates2, coordinates3);
+      [].push.apply(buffer, coordinates1.asArray()); // Syntax note: calls the push method for `buffer` for each element in `....asArray()`
+      [].push.apply(buffer, normal.asArray());
+      [].push.apply(buffer, coordinates2.asArray());
+      [].push.apply(buffer, normal.asArray());
+      [].push.apply(buffer, coordinates3.asArray());
+      [].push.apply(buffer, normal.asArray());
     }
-    console.log(triangleCount);
-    return { buffer: buffer, triangleCount: triangleCount };
+
+    return {buffer: buffer, triangleCount: triangleCount };
   })
 }
 

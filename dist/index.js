@@ -114,10 +114,17 @@ function genPositionsAndNormals() {
         var cornerTable = JSON.parse(data);
         var buffer = [];
         var triangleCount = cornerTable.V.length / 3;
+        var triangleLoss = 0;
         for (var i = 0; i < triangleCount; i++) {
             var corner1 = i * 3;
             var corner2 = (i * 3) + 1;
             var corner3 = (i * 3) + 2;
+            if (cornerTable.O[corner1] == -1 ||
+                cornerTable.O[corner2] == -1 ||
+                cornerTable.O[corner3] == -1) {
+                triangleLoss += 1;
+                continue;
+            }
             var vertex1 = cornerTable.V[corner1];
             var vertex2 = cornerTable.V[corner2];
             var vertex3 = cornerTable.V[corner3];
@@ -132,7 +139,8 @@ function genPositionsAndNormals() {
             [].push.apply(buffer, coordinates3.asArray());
             [].push.apply(buffer, normal.asArray());
         }
-        return { buffer: buffer, triangleCount: triangleCount };
+        console.log(triangleLoss);
+        return { buffer: buffer, triangleCount: triangleCount - triangleLoss };
     });
 }
 function createDataBuffer(webGL2RenderingContext, vao, data) {

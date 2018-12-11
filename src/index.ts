@@ -138,11 +138,18 @@ function genPositionsAndNormals(): Promise<{ buffer: number[], triangleCount: nu
     const cornerTable: { G: number[], V: number[], O: number[] } = JSON.parse(data) as { G: number[], V: number[], O: number[] };
     const buffer: number[] = [];
     const triangleCount: number = cornerTable.V.length / 3;
+    let triangleLoss: number = 0;
 
     for(let i = 0; i < triangleCount; i++) {
       const corner1 = i * 3;
       const corner2 = (i * 3) + 1;
       const corner3 = (i * 3) + 2;
+      if(cornerTable.O[corner1] == -1 ||
+        cornerTable.O[corner2] == -1 ||
+        cornerTable.O[corner3] == -1 ) {
+        triangleLoss += 1;
+        continue;
+      }
       const vertex1: number = cornerTable.V[corner1];
       const vertex2: number = cornerTable.V[corner2];
       const vertex3: number = cornerTable.V[corner3];
@@ -163,8 +170,8 @@ function genPositionsAndNormals(): Promise<{ buffer: number[], triangleCount: nu
       [].push.apply(buffer, coordinates3.asArray());
       [].push.apply(buffer, normal.asArray());
     }
-
-    return {buffer: buffer, triangleCount: triangleCount };
+    console.log(triangleLoss);
+    return {buffer: buffer, triangleCount: triangleCount - triangleLoss };
   })
 }
 

@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var webgl_basics_1 = require("./webgl-basics");
 var linalg_1 = require("./linalg");
+var corner_table_1 = require("./corner-table/corner-table");
 var fs = require('fs');
 var https = require('http');
 var vertexShaderStringCode = fs.readFileSync(__dirname + './../shaders/vertex.glsl').toString();
@@ -105,13 +106,22 @@ function genPositionsAndNormals() {
     var href = window.location.href;
     var url = new URL(href);
     var meshName = url.searchParams.get('mesh');
+    var simplificationSteps = url.searchParams.get('steps');
     if (meshName === null) {
         meshName = "bunny";
     }
+    if (simplificationSteps === null) {
+        simplificationSteps = '0';
+    }
     // return getRequest(`http://mesh-services.ianalbuquerque.com:8999/mesh/` + meshName)
-    return getRequest("http://localhost:8999/mesh/" + meshName)
+    return getRequest("http://localhost:8999/mesh/" + meshName + "/" + simplificationSteps)
         .then(function (data) {
-        var cornerTable = JSON.parse(data);
+        JSON.parse(data);
+        var compression = JSON.parse(data);
+        var cornerTableStructure = new corner_table_1.CornerTable();
+        cornerTableStructure.decompress(compression.delta, compression.clers.split(''));
+        var cornerTable = cornerTableStructure.getData();
+        // const cornerTable: { G: number[], V: number[], O: number[] } = JSON.parse(data) as { G: number[], V: number[], O: number[] };
         var buffer = [];
         var triangleCount = cornerTable.V.length / 3;
         var triangleLoss = 0;
@@ -139,7 +149,7 @@ function genPositionsAndNormals() {
             [].push.apply(buffer, coordinates3.asArray());
             [].push.apply(buffer, normal.asArray());
         }
-        console.log(triangleLoss);
+        console.log("Triangle Loss = " + triangleLoss);
         return { buffer: buffer, triangleCount: triangleCount - triangleLoss };
     });
 }
@@ -166,5 +176,17 @@ function loadDataInGPU(webGL2RenderingContext, data) {
     var vao = webGL2RenderingContext.createVertexArray();
     var buffer = createDataBuffer(webGL2RenderingContext, vao, data);
     return { vao: vao, buffer: buffer };
+}
+// Encoding stuff
+function ab2str(buf) {
+    return String.fromCharCode.apply(null, new Uint8Array(buf));
+}
+function str2ab(str) {
+    var buf = new ArrayBuffer(str.length * 1);
+    var bufView = new Uint8Array(buf);
+    for (var i = 0, strLen = str.length; i < strLen; i++) {
+        bufView[i] = str.charCodeAt(i);
+    }
+    return buf;
 }
 //# sourceMappingURL=index.js.map

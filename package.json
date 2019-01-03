@@ -20,6 +20,7 @@
   "dependencies": {
     "@types/mathjs": "^4.4.3",
     "@types/webgl2": "0.0.3",
+    "@tyriar/fibonacci-heap": "^2.0.9",
     "mathjs": "^5.2.3",
     "uniq": "^1.0.1"
   },

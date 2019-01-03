@@ -2,6 +2,7 @@ import { create } from "domain";
 import { createProgram, createShader, projectionMatrix } from "./webgl-basics";
 import { Vector3, normalFromTriangleVertices } from "./linalg";
 import { SSL_OP_MSIE_SSLV2_RSA_PADDING } from "constants";
+import { CornerTable } from "./corner-table/corner-table";
 
 const fs = require('fs');
 const https = require('http');
@@ -129,13 +130,22 @@ function genPositionsAndNormals(): Promise<{ buffer: number[], triangleCount: nu
   const href = window.location.href;
   const url = new URL(href);
   let meshName = url.searchParams.get('mesh');
+  let simplificationSteps = url.searchParams.get('steps');
   if(meshName === null) {
     meshName = "bunny"
   }
+  if(simplificationSteps === null) {
+    simplificationSteps = '0';
+  }
   // return getRequest(`http://mesh-services.ianalbuquerque.com:8999/mesh/` + meshName)
-  return getRequest(`http://localhost:8999/mesh/` + meshName)  
+  return getRequest(`http://localhost:8999/mesh/` + meshName + `/` + simplificationSteps)  
   .then((data: string) => {
-    const cornerTable: { G: number[], V: number[], O: number[] } = JSON.parse(data) as { G: number[], V: number[], O: number[] };
+    JSON.parse(data) as { G: number[], V: number[], O: number[] };
+    const compression: { delta: number[], clers: string } = JSON.parse(data) as { delta: number[], clers: string };
+    const cornerTableStructure: CornerTable = new CornerTable();
+    cornerTableStructure.decompress(compression.delta, compression.clers.split(''))
+    const cornerTable: { G: number[], V: number[], O: number[] } = cornerTableStructure.getData();
+    // const cornerTable: { G: number[], V: number[], O: number[] } = JSON.parse(data) as { G: number[], V: number[], O: number[] };
     const buffer: number[] = [];
     const triangleCount: number = cornerTable.V.length / 3;
     let triangleLoss: number = 0;
@@ -170,7 +180,7 @@ function genPositionsAndNormals(): Promise<{ buffer: number[], triangleCount: nu
       [].push.apply(buffer, coordinates3.asArray());
       [].push.apply(buffer, normal.asArray());
     }
-    console.log(triangleLoss);
+    console.log("Triangle Loss = " + triangleLoss);
     return {buffer: buffer, triangleCount: triangleCount - triangleLoss };
   })
 }
@@ -212,4 +222,19 @@ function loadDataInGPU( webGL2RenderingContext: WebGL2RenderingContext,
   const vao: WebGLVertexArrayObject = webGL2RenderingContext.createVertexArray();
   const buffer: WebGLBuffer = createDataBuffer(webGL2RenderingContext, vao, data);
   return { vao: vao, buffer: buffer };
+}
+
+// Encoding stuff
+
+function ab2str(buf: ArrayBuffer): string {
+  return String.fromCharCode.apply(null, new Uint8Array(buf));
+}
+
+function str2ab(str: string): ArrayBuffer {
+  let buf: ArrayBuffer = new ArrayBuffer(str.length * 1);
+  let bufView = new Uint8Array(buf);
+  for (let i=0, strLen=str.length; i<strLen; i++) {
+    bufView[i] = str.charCodeAt(i);
+  }
+  return buf;
 }
